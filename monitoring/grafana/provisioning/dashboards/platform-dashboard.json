@@ -1,0 +1,218 @@
+{
+  "title": "Smart Drug Interaction Platform",
+  "uid": "drug-platform-v1",
+  "schemaVersion": 38,
+  "version": 2,
+  "refresh": "30s",
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "tags": ["drug-interaction", "postgres"],
+  "panels": [
+
+    {
+      "id": 1,
+      "title": "Total Analyses",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "drug-postgres" },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) AS value FROM analysis_history",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "#22c55e", "mode": "fixed" },
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+
+    {
+      "id": 2,
+      "title": "Avg Confidence Score",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "drug-postgres" },
+      "targets": [
+        {
+          "rawSql": "SELECT ROUND(AVG(confidence)::numeric, 2) AS value FROM analysis_history",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "#3b82f6", "mode": "fixed" },
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red",    "value": null },
+              { "color": "yellow", "value": 0.6 },
+              { "color": "green",  "value": 0.8 }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+
+    {
+      "id": 3,
+      "title": "Critical & Severe Cases",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "drug-postgres" },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) AS value FROM analysis_history WHERE severity IN ('contraindicated', 'severe')",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "#ef4444", "mode": "fixed" },
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "red", "value": null }]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+
+    {
+      "id": 4,
+      "title": "Analyses Last 24h",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "drug-postgres" },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) AS value FROM analysis_history WHERE created_at >= NOW() - INTERVAL '24 hours'",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "#8b5cf6", "mode": "fixed" },
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "purple", "value": null }]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+
+    {
+      "id": 5,
+      "title": "Analyses Over Time",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 4, "w": 14, "h": 8 },
+      "datasource": { "type": "postgres", "uid": "drug-postgres" },
+      "targets": [
+        {
+          "rawSql": "SELECT date_trunc('hour', created_at) AS time, COUNT(*) AS analyses FROM analysis_history WHERE created_at >= NOW() - INTERVAL '24 hours' GROUP BY 1 ORDER BY 1",
+          "format": "time_series",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 15, "drawStyle": "line", "spanNulls": true },
+          "unit": "short"
+        }
+      },
+      "options": { "tooltip": { "mode": "single" }, "legend": { "displayMode": "list" } }
+    },
+
+    {
+      "id": 6,
+      "title": "Severity Distribution",
+      "type": "piechart",
+      "gridPos": { "x": 14, "y": 4, "w": 10, "h": 8 },
+      "datasource": { "type": "postgres", "uid": "drug-postgres" },
+      "targets": [
+        {
+          "rawSql": "SELECT severity AS metric, COUNT(*) AS value FROM analysis_history GROUP BY severity ORDER BY value DESC",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "contraindicated" }, "properties": [{ "id": "color", "value": { "fixedColor": "#111827", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "severe" },          "properties": [{ "id": "color", "value": { "fixedColor": "#ef4444", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "moderate" },        "properties": [{ "id": "color", "value": { "fixedColor": "#f97316", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "mild" },            "properties": [{ "id": "color", "value": { "fixedColor": "#eab308", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "none" },            "properties": [{ "id": "color", "value": { "fixedColor": "#22c55e", "mode": "fixed" } }] }
+        ]
+      },
+      "options": { "pieType": "donut", "legend": { "displayMode": "table", "placement": "right" } }
+    },
+
+    {
+      "id": 7,
+      "title": "Recent Analyses",
+      "type": "table",
+      "gridPos": { "x": 0, "y": 12, "w": 24, "h": 8 },
+      "datasource": { "type": "postgres", "uid": "drug-postgres" },
+      "targets": [
+        {
+          "rawSql": "SELECT drug_a AS \"Drug A\", drug_b AS \"Drug B\", severity AS \"Severity\", ROUND(confidence::numeric, 2) AS \"Confidence\", created_at AS \"Time\" FROM analysis_history ORDER BY created_at DESC LIMIT 20",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Severity" },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "contraindicated": { "text": "⛔ Contraindicated", "color": "dark-red" } } },
+                  { "type": "value", "options": { "severe":          { "text": "🔴 Severe",          "color": "red" } } },
+                  { "type": "value", "options": { "moderate":        { "text": "🟠 Moderate",        "color": "orange" } } },
+                  { "type": "value", "options": { "mild":            { "text": "🟡 Mild",            "color": "yellow" } } },
+                  { "type": "value", "options": { "none":            { "text": "🟢 None",            "color": "green" } } }
+                ]
+              },
+              { "id": "custom.displayMode", "value": "color-background" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Confidence" },
+            "properties": [
+              { "id": "unit", "value": "percentunit" },
+              { "id": "custom.displayMode", "value": "gradient-gauge" },
+              { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+                { "color": "red",    "value": null },
+                { "color": "yellow", "value": 0.6 },
+                { "color": "green",  "value": 0.8 }
+              ]}}
+            ]
+          }
+        ]
+      },
+      "options": { "sortBy": [{ "displayName": "Time", "desc": true }] }
+    }
+
+  ]
+}

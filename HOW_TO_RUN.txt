@@ -1,0 +1,268 @@
+# ============================================================
+#   SMART DRUG INTERACTION PLATFORM
+#   Step-by-Step Execution Guide
+#   (Everything runs inside Docker — nothing on localhost)
+# ============================================================
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 0 — INSTALL REQUIREMENTS (One time only)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Install these on your computer FIRST:
+
+1. Docker Desktop
+   Download: https://www.docker.com/products/docker-desktop/
+   ✅ This installs both Docker and Docker Compose
+
+2. Git (optional but recommended)
+   Download: https://git-scm.com/
+
+3. Make (for Windows users only)
+   Windows: Install via https://chocolatey.org/
+   Run:     choco install make
+   
+   Mac/Linux: make is already installed ✅
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1 — GET GROQ API KEY (Free)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Go to: https://console.groq.com/
+2. Sign up (free)
+3. Click "API Keys" → "Create API Key"
+4. Copy the key (looks like: gsk_xxxxxxxxxxxx)
+
+You need this in Step 3.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2 — EXTRACT AND OPEN PROJECT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Download the ZIP file: smart-drug-interactions.zip
+2. Extract it anywhere (e.g. Desktop)
+3. Open your Terminal:
+   - Windows: Search "Command Prompt" or "PowerShell"
+   - Mac:     Search "Terminal"
+   - Linux:   Ctrl + Alt + T
+
+4. Navigate into the project folder:
+
+   cd Desktop/smart-drug-interactions
+
+   (change "Desktop" to wherever you extracted it)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3 — ADD YOUR GROQ API KEY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Open the file called ".env" in any text editor (Notepad, VS Code).
+
+Find this line:
+   GROQ_API_KEY=your_groq_api_key_here
+
+Replace with your real key:
+   GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxx
+
+Save the file.
+
+NOTE: The .env file already exists in the project.
+      Do NOT rename it. Do NOT delete it.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 4 — START DOCKER DESKTOP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Open Docker Desktop app on your computer.
+Wait until you see "Docker is running" (green icon).
+
+IMPORTANT: Docker must be running before Step 5.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 5 — BUILD AND RUN THE PROJECT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In your terminal (inside the project folder), run:
+
+   docker-compose up --build
+
+This will:
+  ✅ Download all required images
+  ✅ Build backend (FastAPI + ML + RAG)
+  ✅ Build frontend (React)
+  ✅ Start PostgreSQL database
+  ✅ Start Redis cache
+  
+  ✅ Start Kafka producers and consumers
+  ✅ Start Prometheus + Grafana monitoring
+
+⏳ First time takes 5-10 minutes (downloading images).
+⏳ After that, starts in under 1 minute.
+
+You will see lots of logs. That is normal.
+Wait until you see:
+   "drug_backend | ✅ Platform ready to serve requests"
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 6 — OPEN IN BROWSER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Open any of these URLs in Chrome or Firefox:
+
+┌─────────────────────────────────────────────────────┐
+│  YOUR APP (Main)   →  http://localhost:3002          │
+│  API Docs          →  http://localhost:8000/docs     │
+│  Grafana Dashboard →  http://localhost:3001          │
+│                       Username: admin                │
+│                       Password: admin                │
+│  Prometheus        →  http://localhost:9090          │
+└─────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 7 — TEST THE APP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Go to http://localhost:3002
+2. In "First Drug" box, type:  Warfarin
+3. In "Second Drug" box, type: Aspirin
+4. Click "Analyse Interaction"
+5. Watch:
+   ✅ Severity badge appears in 2 seconds
+   ✅ AI explanation streams word by word
+   ✅ Sources panel shows PubMed/OpenFDA references
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STOP / RESTART COMMANDS (run in terminal)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Stop the project:
+   docker-compose down
+
+Start again (without rebuilding):
+   docker-compose up
+
+Rebuild everything fresh:
+   docker-compose up --build
+
+Delete all data and start fresh:
+   docker-compose down -v
+
+View logs of one service:
+   docker-compose logs -f backend
+   docker-compose logs -f frontend
+   docker-compose logs -f kafka
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMMON ERRORS AND FIXES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ERROR: "Cannot connect to Docker daemon"
+FIX:   Open Docker Desktop first, wait for green icon
+
+ERROR: "Port 3000 already in use"
+FIX:   Run: docker-compose down
+       Then: docker-compose up --build
+
+ERROR: "GROQ API error"
+FIX:   Check your GROQ_API_KEY in .env file
+       Make sure no extra spaces around the key
+
+ERROR: Backend keeps restarting
+FIX:   Run: docker-compose logs -f backend
+       Check error message and fix .env values
+
+ERROR: Kafka topics not found
+FIX:   Wait 30 seconds after startup — Kafka needs time
+       Or run: docker-compose restart kafka-init
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROJECT FOLDER STRUCTURE (Quick Reference)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+smart-drug-interactions/
+│
+├── .env                    ← ADD YOUR GROQ KEY HERE
+├── .env.example            ← Template (do not edit)
+├── docker-compose.yml      ← Controls ALL services
+├── prometheus.yml          ← Metrics config
+├── Makefile                ← Shortcut commands
+├── README.md               ← Full documentation
+├── render.yaml             ← Cloud deployment config
+├── runtime.txt             ← Python version
+│
+├── backend/                ← FastAPI Python backend
+│   ├── main.py             ← App entry point
+│   ├── requirements.txt    ← Python packages
+│   ├── Dockerfile          ← How to build backend
+│   └── src/
+│       ├── api/routes.py       ← All API endpoints
+│       ├── services/
+│       │   ├── ml_service.py   ← Severity prediction
+│       │   ├── rag_service.py  ← ChromaDB + Groq LLM
+│       │   └── drug_service.py ← Drug autocomplete
+│       ├── models/
+│       │   ├── schemas.py      ← API request/response
+│       │   └── db_models.py    ← Database tables
+│       └── core/
+│           ├── config.py       ← App settings
+│           ├── database.py     ← PostgreSQL connection
+│           ├── redis_client.py ← Redis connection
+│           └── logger.py       ← Logging setup
+│
+├── frontend/               ← React TypeScript app
+│   ├── src/
+│   │   ├── App.tsx             ← Main app + routing
+│   │   ├── components/         ← All UI components
+│   │   ├── hooks/useSSE.ts     ← Streaming hook
+│   │   ├── services/api.ts     ← API calls
+│   │   └── types/index.ts      ← TypeScript types
+│   ├── Dockerfile          ← How to build frontend
+│   └── nginx.conf          ← Web server config
+│
+├── ingestion/              ← Kafka data pipeline
+│   ├── openfda_producer.py ← Polls FDA API → Kafka
+│   ├── pubmed_producer.py  ← Fetches research → Kafka
+│   ├── feature_consumer.py ← Kafka → ML features
+│   └── ml_consumer.py      ← Features → predictions
+│
+├── kafka/                  ← Kafka configuration
+│   └── create_topics.sh    ← Creates required topics
+│
+└── monitoring/             ← Grafana dashboards
+    └── grafana/
+        └── provisioning/   ← Auto-loaded dashboards
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT RUNS WHERE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Everything runs INSIDE Docker containers.
+You do NOT install Python, Node, or Kafka manually.
+Docker handles 100% of the setup automatically.
+
+Service          Container Name        Port
+───────────────────────────────────────────────
+React Frontend   drug_frontend         3000
+FastAPI Backend  drug_backend          8000
+PostgreSQL       drug_postgres         5432
+Redis            drug_redis            6379
+Kafka            drug_kafka            9092
+Grafana          drug_grafana          3001
+Prometheus       drug_prometheus       9090
+Loki (logs)      drug_loki            3100
+OpenFDA Producer drug_openfda_producer  —
+PubMed Producer  drug_pubmed_producer   —
+Feature Consumer drug_feature_consumer  —
+ML Consumer      drug_ml_consumer       —
+

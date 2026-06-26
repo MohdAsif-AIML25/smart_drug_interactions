@@ -1,0 +1,27 @@
+apiVersion: 1
+
+datasources:
+  # PostgreSQL — hardcoded to match docker-compose defaults
+  # (Grafana does not expand env vars in the 'user' field)
+  - name: PostgreSQL
+    type: postgres
+    uid: drug-postgres
+    url: postgres:5432
+    database: drugdb
+    user: postgres
+    isDefault: true
+    editable: false
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1600
+      timescaledb: false
+    secureJsonData:
+      password: postgres
+
+  # Prometheus — for FastAPI metrics (request rate, latency, errors)
+  - name: Prometheus
+    type: prometheus
+    uid: drug-prometheus
+    url: http://prometheus:9090
+    isDefault: false
+    editable: false

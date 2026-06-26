@@ -1,0 +1,70 @@
+# ─── Environment & Secrets ───────────────────────────────
+.env
+*.env
+.env.local
+.env.*.local
+
+# ─── Python ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+pip-wheel-metadata/
+
+# ─── Virtual Environments ─────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ─── ML Models ────────────────────────────────────────────
+backend/models/
+models/
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
+
+# ─── Vector DB / ChromaDB ─────────────────────────────────
+chroma_data/
+backend/chroma_data/
+*.sqlite3
+
+# ─── Node / Frontend ──────────────────────────────────────
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+.npm/
+*.tsbuildinfo
+
+# ─── Docker ───────────────────────────────────────────────
+docker-compose.override.yml
+
+# ─── Logs ─────────────────────────────────────────────────
+*.log
+logs/
+backend/logs/
+
+# ─── OS ───────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ─── IDE ──────────────────────────────────────────────────
+.idea/
+.vscode/
+*.code-workspace
+
+# ─── Testing ──────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/

@@ -1,0 +1,211 @@
+# ============================================================
+# Smart Drug Interaction Platform
+# Services: postgres, redis, backend, frontend,
+#           grafana, prometheus
+#
+# Memory budget (actual usage targets):
+#   postgres    ~40 MB   limit 64m
+#   redis       ~10 MB   limit 64m
+#   backend    ~450 MB   limit 512m
+#   frontend    ~15 MB   limit 48m
+#   grafana     ~60 MB   limit 128m
+#   prometheus  ~40 MB   limit 64m
+#   ---------------------------------
+#   TOTAL      ~615 MB   limit ~880m (~0.9 GB)
+#
+# Note: Kafka removed -- not used by core API.
+#
+# Run:  docker compose up -d --build
+# ============================================================
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: drug_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-drugdb}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - drugnet
+    restart: unless-stopped
+    mem_limit: 64m
+    memswap_limit: 64m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-drugdb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: drug_redis
+    command: redis-server --appendonly yes --maxmemory 48mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - drugnet
+    restart: unless-stopped
+    mem_limit: 64m
+    memswap_limit: 64m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: drug_backend
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-drugdb}
+      REDIS_URL: redis://redis:6379/0
+      CHROMA_DB_PATH: /app/chroma_data
+      ML_MODEL_PATH: /app/models/drug_interaction_model.pkl
+      MALLOC_TRIM_THRESHOLD_: "100000"
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/app/chroma_data
+      - model_data:/app/models
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - drugnet
+    restart: unless-stopped
+    mem_limit: 800m
+    memswap_limit: 800m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: drug_frontend
+    ports:
+      - "3002:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - drugnet
+    restart: unless-stopped
+    mem_limit: 48m
+    memswap_limit: 48m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: drug_grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_INSTALL_PLUGINS: ""
+      GF_DATABASE_TYPE: sqlite3
+      GF_DASHBOARDS_MIN_REFRESH_INTERVAL: 30s
+      # Pass PostgreSQL credentials so datasources.yml can read them
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-drugdb}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - drugnet
+    restart: unless-stopped
+    mem_limit: 128m
+    memswap_limit: 128m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: drug_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=3d'
+    networks:
+      - drugnet
+    restart: unless-stopped
+    mem_limit: 64m
+    memswap_limit: 64m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+networks:
+  drugnet:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  chroma_data:
+  model_data:
+  grafana_data:
+  prometheus_data:
