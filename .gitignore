@@ -32,6 +32,15 @@ models/
 *.pt
 *.pth
 
+
+# Keep Python source model files
+!/backend/src/models/
+!/backend/src/models/**
+
+# Never track Python cache files
+**/__pycache__/
+*.py[cod]
+
 # ─── Vector DB / ChromaDB ─────────────────────────────────
 chroma_data/
 backend/chroma_data/
